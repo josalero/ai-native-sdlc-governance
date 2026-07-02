@@ -10,6 +10,7 @@ Framework for safely delivering AI-enabled software: intake, risk, specification
 | --- | --- |
 | [**ai-native-sdlc-framework.md**](./ai-native-sdlc-framework.md) | Policy owners, architects, governance leads — master framework |
 | [**templates/**](./templates/README.md) | Engineering teams — fillable forms per use case |
+| [**agent-cli-prerequisites-and-errors.md**](./agent-cli-prerequisites-and-errors.md) | Engineers and platform teams — CLI prerequisites, API keys, validation, and troubleshooting |
 
 ## End-to-end sample
 

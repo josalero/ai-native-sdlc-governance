@@ -22,6 +22,7 @@ The reference implementation is a Spring Boot 4.1 / Java 25 HR Policy Assistant 
 | [`sample/ai-docs/policy-assistant/`](./sample/ai-docs/policy-assistant/README.md) | Completed AI specs and governance packet |
 | [`sample/policy-assistant/`](./sample/policy-assistant/README.md) | Working Spring Boot sample application |
 | [`.ai-sdlc.json`](./.ai-sdlc.json) | Agent registry, runner defaults, required specs, and verification commands |
+| [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md) | Agent CLI prerequisites, API keys, validation, and error messages |
 | [`bin/`](./bin/ai-sdlc) | Cross-platform CLI wrappers |
 | [`scripts/`](./scripts/start-agent-run.py) | Python runner implementation |
 
@@ -256,6 +257,8 @@ ai-sdlc help
 ai-sdlc config
 ```
 
+Agent CLI prerequisites, API keys, and troubleshooting are documented in [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md).
+
 If you do not install the CLI, you can still use the scripts directly:
 
 ```bash
@@ -300,6 +303,16 @@ Configured runners:
 | `manual` | none | Records that the prompt should be pasted into another reviewed tool |
 
 Use [`docs/templates/ai-sdlc-run-config.json`](./docs/templates/ai-sdlc-run-config.json) to create a config for another repo or use case.
+
+Before using a hosted agent runner, confirm that its CLI is installed and authenticated:
+
+```bash
+command -v codex || true
+command -v claude || true
+command -v cursor-agent || true
+```
+
+See [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md) for API key options, login checks, and common errors.
 
 ## Scenario 1: Review The AI Specs
 
@@ -711,5 +724,8 @@ Then open the generated `agent-prompt.md`, paste it into the agent tool you want
 | `Runner config not found` | Run from repo root or set `AI_SDLC_CONFIG=/path/to/.ai-sdlc.json` |
 | `Required specs are missing` | Complete the use-case packet or pass `--allow-missing-specs` for draft work |
 | `Agent runner executable not found` | Install the selected CLI or use `--runner manual` |
+| Cursor says `Authentication required. Please run 'agent login' first, or set CURSOR_API_KEY environment variable.` | Run `cursor-agent login`, set `CURSOR_API_KEY`, or use `--runner manual` |
 | Cursor or Claude starts with unexpected permissions | Check `.ai-sdlc.json`, `--dry-run`, and runner-specific environment overrides |
 | Reusing `--run-id` fails | Pick a new run id or delete the old smoke run folder |
+
+For detailed CLI prerequisites, API-key setup, and error message explanations, see [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md).
