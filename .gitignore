@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+# Gradle
+.gradle/
+**/.gradle/
+build/
+**/build/
+
+# Java
+out/
+*.class
+
+# Logs
+*.log

@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: policy-assistant
+  profiles:
+    active: stub
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+app:
+  ai:
+    prompt-version: policy-answer-v1
+    model-name: stub-local-v1
+    max-retrieved-chunks: 3
+    guardrail:
+      prompt-injection-enabled: true
+      output-pii-patterns:
+        - "(?i)\\b\\d{3}-\\d{2}-\\d{4}\\b"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: openai
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+
+app:
+  ai:
+    model-name: gpt-4o-mini
+
+# For openai profile, add to build.gradle.kts:
+# implementation("org.springframework.ai:spring-ai-starter-model-openai")

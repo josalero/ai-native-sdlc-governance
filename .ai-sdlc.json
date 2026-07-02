@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1.0",
+  "defaultUseCase": "sample/ai-docs/policy-assistant",
+  "defaultRunner": "codex",
+  "runDirectory": "16-agent-runs",
+  "defaultReviewer": "Accountable human reviewer",
+  "missingSpecPolicy": "fail",
+  "defaultVerificationCommands": [
+    "cd sample/policy-assistant && ./gradlew test"
+  ],
+  "stateMachine": {
+    "initialStatus": "ready_for_agent",
+    "agentStartedStatus": "in_progress",
+    "agentFinishedStatus": "agent_execution_finished",
+    "agentFailedStatus": "agent_execution_failed",
+    "humanReviewStatus": "ready_for_human_review"
+  },
+  "runners": {
+    "codex": {
+      "type": "codex",
+      "executable": "codex",
+      "sandbox": "workspace-write",
+      "approvalPolicy": "never",
+      "model": null,
+      "extraArgs": []
+    },
+    "claude": {
+      "type": "claude",
+      "executable": "claude",
+      "permissionMode": "acceptEdits",
+      "outputFormat": "text",
+      "model": null,
+      "noSessionPersistence": true,
+      "extraArgs": []
+    },
+    "cursor": {
+      "type": "cursor",
+      "executable": "cursor-agent",
+      "outputFormat": "text",
+      "sandbox": "enabled",
+      "trustWorkspace": true,
+      "force": false,
+      "model": null,
+      "mode": null,
+      "extraArgs": []
+    },
+    "manual": {
+      "type": "manual"
+    }
+  },
+  "commonRequiredSpecs": [
+    "README.md",
+    "03-specification/feature-ai-spec.yml",
+    "03-specification/ai-spec.md",
+    "03-specification/role-and-agent-operating-model.md",
+    "03-specification/manual-review-and-approval-workflow.md",
+    "09-controls/policy-rules.md",
+    "09-controls/guardrail-specification.md"
+  ],
+  "agents": {
+    "product": {
+      "displayName": "Product Analyst Agent",
+      "aliases": [
+        "product",
+        "product-analyst",
+        "product-analyst-agent"
+      ],
+      "reviewer": "Product Owner",
+      "requiredSpecs": [
+        "01-intake/intake.md",
+        "02-risk/risk-classification.md"
+      ]
+    },
+    "architecture": {
+      "displayName": "Architecture Agent",
+      "aliases": [
+        "architecture",
+        "architect",
+        "architecture-agent"
+      ],
+      "reviewer": "AI Architect",
+      "requiredSpecs": [
+        "04-architecture/architecture-pattern.md",
+        "05-data/data-governance.md",
+        "08-rag/rag-governance.md"
+      ]
+    },
+    "coding": {
+      "displayName": "Coding Agent",
+      "aliases": [
+        "coding",
+        "code",
+        "coder",
+        "coding-agent"
+      ],
+      "reviewer": "Software Engineer",
+      "requiredSpecs": [
+        "10-build/code-generation-plan.md",
+        "10-build/ai-test-generation-plan.md",
+        "08-rag/rag-governance.md"
+      ]
+    },
+    "test": {
+      "displayName": "AI Test Agent",
+      "aliases": [
+        "test",
+        "tests",
+        "tester",
+        "ai-test",
+        "ai-test-agent"
+      ],
+      "reviewer": "QA / AI Tester",
+      "requiredSpecs": [
+        "10-build/ai-test-generation-plan.md",
+        "11-evaluation/test-cases.md",
+        "11-evaluation/evaluation-report.md"
+      ]
+    },
+    "security": {
+      "displayName": "Security Review Agent",
+      "aliases": [
+        "security",
+        "security-review",
+        "security-review-agent"
+      ],
+      "reviewer": "Security Reviewer",
+      "requiredSpecs": [
+        "12-security/security-review.md",
+        "04-architecture/architecture-pattern.md",
+        "05-data/data-governance.md"
+      ]
+    },
+    "release": {
+      "displayName": "Release Readiness Agent",
+      "aliases": [
+        "release",
+        "readiness",
+        "release-readiness",
+        "release-readiness-agent"
+      ],
+      "reviewer": "Product Owner / SRE",
+      "requiredSpecs": [
+        "14-monitoring/monitoring.md",
+        "15-release/production-readiness.md",
+        "11-evaluation/evaluation-report.md",
+        "12-security/security-review.md"
+      ]
+    }
+  }
+}

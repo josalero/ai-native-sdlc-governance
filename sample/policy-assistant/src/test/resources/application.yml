@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: stub
+
+app:
+  ai:
+    prompt-version: policy-answer-v1
+    model-name: stub-local-v1
+    max-retrieved-chunks: 3
+    guardrail:
+      prompt-injection-enabled: true
+      output-pii-patterns:
+        - "(?i)\\b\\d{3}-\\d{2}-\\d{4}\\b"

@@ -1,0 +1,191 @@
+specVersion: "1.0"
+kind: ai-feature-spec
+feature:
+  id: hr-policy-assistant
+  name: HR Policy Assistant
+  status: approved-for-sample
+  riskLevel: medium
+  owner:
+    business: HR Operations
+    technical: Platform Engineering
+  description: >
+    Add an internal RAG endpoint that answers employee HR policy questions
+    using approved policy excerpts, returns citations and confidence, applies
+    runtime guardrails, and logs AI audit metadata.
+accountability:
+  operatingModel: sample/ai-docs/policy-assistant/03-specification/role-and-agent-operating-model.md
+  humanApprovers:
+    productOwner: HR Operations sample owner
+    aiArchitect: AI Architect sample reviewer
+    softwareEngineer: Platform Engineering sample owner
+    qaTester: QA sample owner
+    securityReviewer: Security sample reviewer
+    dataOwner: HR Operations sample owner
+    sre: SRE sample reviewer
+  agentPrinciple: Agents may draft and generate; humans approve and accept risk.
+  deliveryAgents:
+    - name: Product Analyst Agent
+      allowedOutput: Intake and acceptance criteria drafts
+      accountableHuman: Product Owner
+    - name: Architecture Agent
+      allowedOutput: AI spec, architecture, and control drafts
+      accountableHuman: AI Architect
+    - name: Coding Agent
+      allowedOutput: Spring Boot implementation and tests
+      accountableHuman: Software Engineer
+    - name: AI Test Agent
+      allowedOutput: Eval dataset, test runner, and test report drafts
+      accountableHuman: QA / AI Tester
+    - name: Security Review Agent
+      allowedOutput: Security review draft and findings
+      accountableHuman: Security Reviewer
+    - name: Release Readiness Agent
+      allowedOutput: Readiness checklist and rollback evidence drafts
+      accountableHuman: Product Owner / SRE
+runtime:
+  language: Java
+  javaVersion: "25"
+  framework: Spring Boot
+  frameworkVersion: "4.1.0"
+  aiLibrary: Spring AI
+  aiLibraryVersion: "2.0.0"
+  defaultProfile: stub
+api:
+  endpoint:
+    method: POST
+    path: /api/v1/policy/questions
+    request:
+      contentType: application/json
+      schema:
+        question:
+          type: string
+          required: true
+          maxLength: 2000
+        userId:
+          type: string
+          required: true
+          maxLength: 100
+    response:
+      contentType: application/json
+      schema:
+        answer: string
+        citations:
+          type: array
+          items:
+            documentId: string
+            excerpt: string
+        confidence:
+          enum: [high, medium, low]
+        warnings:
+          type: array
+          items: string
+        promptVersion: string
+        modelName: string
+requirements:
+  functional:
+    - id: FR-001
+      statement: Accept employee HR policy questions through the policy questions endpoint.
+      acceptance: Valid request returns HTTP 200 with structured response.
+    - id: FR-002
+      statement: Retrieve relevant policy excerpts from approved markdown documents.
+      acceptance: Golden questions include the expected document ID in citations.
+    - id: FR-003
+      statement: Generate answers using only retrieved policy excerpts.
+      acceptance: Golden answers contain facts present in cited policy excerpts.
+    - id: FR-004
+      statement: Include citations, confidence, warnings, prompt version, and model name in every success response.
+      acceptance: Response JSON matches PolicyAnswerResponse.
+    - id: FR-005
+      statement: Block prompt injection attempts before retrieval and model invocation.
+      acceptance: Known injection marker returns HTTP 400 with title Guardrail violation.
+    - id: FR-006
+      statement: Block SSN-like output values.
+      acceptance: OutputGuardrail throws GuardrailViolationException for configured pattern.
+    - id: FR-007
+      statement: Return low confidence when no policy source matches.
+      acceptance: Unsupported question returns low confidence and no-answer warning.
+    - id: FR-008
+      statement: Log metadata-only AI audit events.
+      acceptance: Audit event includes request ID, user ID, use case, prompt version, model, retrieved document count, retrieved document IDs, guardrail results, latency.
+  nonFunctional:
+    latencyP95LocalMs: 2000
+    latencyP95ProductionMs: 5000
+    costPerRequestLocalUsd: 0
+    auditContentLogging: metadata-only
+    externalModelUse: requires-vendor-privacy-review
+rag:
+  pattern: keyword-rag-sample
+  knowledgeSourcePath: sample/policy-assistant/src/main/resources/policies
+  maxRetrievedChunks: 3
+  citationRequired: true
+  noAnswerBehavior: return-low-confidence
+prompt:
+  version: policy-answer-v1
+  sourcePath: sample/policy-assistant/prompts/policy-answer-v1.prompt
+  variables:
+    - question
+    - context
+model:
+  default:
+    name: stub-local-v1
+    provider: local-stub
+  optional:
+    name: gpt-4o-mini
+    provider: openai
+    enabledByDefault: false
+    approvalRequired: true
+guardrails:
+  - id: GR-001
+    type: input
+    name: prompt-injection-marker-block
+    action: block
+    implementation: sample/policy-assistant/src/main/java/com/example/policyassistant/guardrail/InputGuardrail.java
+  - id: GR-002
+    type: output
+    name: ssn-like-output-block
+    action: block
+    implementation: sample/policy-assistant/src/main/java/com/example/policyassistant/guardrail/OutputGuardrail.java
+  - id: GR-003
+    type: retrieval-output
+    name: grounded-answer-required
+    action: low-confidence-or-warning
+    implementation: sample/policy-assistant/src/main/java/com/example/policyassistant/rag/PolicyAnswerOrchestrator.java
+codeGeneration:
+  plan: sample/ai-docs/policy-assistant/10-build/code-generation-plan.md
+  allowedFiles:
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/api/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/application/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/audit/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/config/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/domain/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/guardrail/**
+    - sample/policy-assistant/src/main/java/com/example/policyassistant/rag/**
+    - sample/policy-assistant/src/main/resources/**
+    - sample/policy-assistant/prompts/**
+    - sample/policy-assistant/src/test/**
+  prohibitedChanges:
+    - Do not add autonomous tools or external side effects.
+    - Do not enable the OpenAI profile by default.
+    - Do not log full prompts, responses, or policy content in audit logs.
+    - Do not remove guardrails or citations.
+aiTesting:
+  plan: sample/ai-docs/policy-assistant/10-build/ai-test-generation-plan.md
+  evalDataset: sample/policy-assistant/src/test/resources/evaluation/policy-assistant-eval-cases.json
+  evalRunner: sample/policy-assistant/src/test/java/com/example/policyassistant/eval/PolicyAssistantEvaluationTest.java
+  requiredCommand: ./gradlew test
+  releaseGate:
+    outputFormatValidity: "100%"
+    goldenCasePassRate: "100%"
+    safetyCasePassRate: "100%"
+    guardrailRegressionPassRate: "100%"
+traceability:
+  intake: sample/ai-docs/policy-assistant/01-intake/intake.md
+  aiSpec: sample/ai-docs/policy-assistant/03-specification/ai-spec.md
+  operatingModel: sample/ai-docs/policy-assistant/03-specification/role-and-agent-operating-model.md
+  manualReview: sample/ai-docs/policy-assistant/03-specification/manual-review-and-approval-workflow.md
+  agentRuns: sample/ai-docs/policy-assistant/16-agent-runs
+  architecture: sample/ai-docs/policy-assistant/04-architecture/architecture-pattern.md
+  ragGovernance: sample/ai-docs/policy-assistant/08-rag/rag-governance.md
+  guardrails: sample/ai-docs/policy-assistant/09-controls/guardrail-specification.md
+  evaluation: sample/ai-docs/policy-assistant/11-evaluation/evaluation-report.md
+  readiness: sample/ai-docs/policy-assistant/15-release/production-readiness.md

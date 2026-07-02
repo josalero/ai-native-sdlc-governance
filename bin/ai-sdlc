@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+resolve_script() {
+  local source="$1"
+  local dir
+  while [[ -L "$source" ]]; do
+    dir="$(cd -P "$(dirname "$source")" && pwd)"
+    source="$(readlink "$source")"
+    [[ "$source" != /* ]] && source="$dir/$source"
+  done
+  cd -P "$(dirname "$source")" && pwd
+}
+
+SCRIPT_DIR="$(resolve_script "${BASH_SOURCE[0]}")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  ai-sdlc <command> [options]
+
+Commands:
+  start        Create an agent run folder from the configured agent registry
+  run          Run a generated agent prompt with Codex, Claude Code, Cursor, or manual mode
+  state        Record state for an agent run
+  config       Print the resolved runner config path
+  help         Show this help
+
+Examples:
+  ai-sdlc start --agent coding --task "Implement the approved feature"
+  ai-sdlc run --runner claude --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
+  ai-sdlc state --run-dir sample/ai-docs/policy-assistant/16-agent-runs/<run-id> --status ready_for_human_review --summary "Ready"
+
+Environment:
+  AI_SDLC_CONFIG  Config path. Default: .ai-sdlc.json in the current repo, then the installed repo.
+USAGE
+}
+
+resolve_config() {
+  local configured="${AI_SDLC_CONFIG:-.ai-sdlc.json}"
+  if [[ "$configured" == /* ]]; then
+    printf '%s\n' "$configured"
+  elif [[ -f "$PWD/$configured" ]]; then
+    printf '%s\n' "$PWD/$configured"
+  else
+    printf '%s\n' "$REPO_ROOT/$configured"
+  fi
+}
+
+command="${1:-help}"
+if [[ $# -gt 0 ]]; then
+  shift
+fi
+
+case "$command" in
+  start)
+    exec "$REPO_ROOT/scripts/start-agent-run.sh" --config "$(resolve_config)" "$@"
+    ;;
+  run)
+    exec "$REPO_ROOT/scripts/run-agent.sh" --config "$(resolve_config)" "$@"
+    ;;
+  state)
+    exec "$REPO_ROOT/scripts/record-agent-state.sh" "$@"
+    ;;
+  config)
+    resolve_config
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

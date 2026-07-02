@@ -1,0 +1,27 @@
+package com.example.policyassistant.api;
+
+import com.example.policyassistant.api.dto.PolicyAnswerResponse;
+import com.example.policyassistant.api.dto.PolicyQuestionRequest;
+import com.example.policyassistant.application.PolicyQuestionService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/policy")
+public class PolicyQuestionController {
+
+    private final PolicyQuestionService policyQuestionService;
+
+    public PolicyQuestionController(PolicyQuestionService policyQuestionService) {
+        this.policyQuestionService = policyQuestionService;
+    }
+
+    @PostMapping("/questions")
+    public PolicyAnswerResponse ask(@Valid @RequestBody PolicyQuestionRequest request) {
+        return policyQuestionService.ask(request);
+    }
+}

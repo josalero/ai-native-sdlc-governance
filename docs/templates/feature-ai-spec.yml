@@ -1,0 +1,104 @@
+specVersion: "1.0"
+kind: ai-feature-spec
+feature:
+  id: "[use-case-slug]"
+  name: "[Feature Name]"
+  status: "draft"
+  riskLevel: "Low / Medium / High / Critical"
+  owner:
+    business: "[Business Owner]"
+    technical: "[Technical Owner]"
+  description: >
+    [One paragraph describing the AI-enabled feature, its users, and the
+    business workflow it supports.]
+accountability:
+  operatingModel: "ai-docs/[use-case-slug]/role-and-agent-operating-model.md"
+  humanApprovers:
+    productOwner: "[Name / role]"
+    aiArchitect: "[Name / role]"
+    softwareEngineer: "[Name / role]"
+    qaTester: "[Name / role]"
+    securityReviewer: "[Name / role]"
+    dataOwner: "[Name / role]"
+    sre: "[Name / role]"
+  agentPrinciple: "Agents may draft and generate; humans approve and accept risk."
+  deliveryAgents:
+    - name: "Product Analyst Agent"
+      allowedOutput: "Intake and acceptance criteria drafts"
+      accountableHuman: "Product Owner"
+    - name: "Architecture Agent"
+      allowedOutput: "AI spec, architecture, and control drafts"
+      accountableHuman: "AI Architect"
+    - name: "Coding Agent"
+      allowedOutput: "Implementation and test diffs"
+      accountableHuman: "Software Engineer"
+    - name: "AI Test Agent"
+      allowedOutput: "Eval dataset, test runner, and test report drafts"
+      accountableHuman: "QA / AI Tester"
+runtime:
+  language: "[Java / Python / TypeScript / Other]"
+  javaVersion: "[Version if applicable]"
+  framework: "[Framework]"
+  frameworkVersion: "[Version]"
+  aiLibrary: "[AI library]"
+  aiLibraryVersion: "[Version]"
+  defaultProfile: "[local / stub / dev profile]"
+api:
+  endpoint:
+    method: "[GET / POST / N/A]"
+    path: "[/api/path]"
+    request:
+      contentType: "application/json"
+      schema: {}
+    response:
+      contentType: "application/json"
+      schema: {}
+requirements:
+  functional:
+    - id: "FR-001"
+      statement: "[Functional requirement]"
+      acceptance: "[How to verify it]"
+  nonFunctional:
+    latencyP95Ms: "[target]"
+    costPerRequestUsd: "[target]"
+    auditContentLogging: "metadata-only"
+    externalModelUse: "requires-model-security-data-approval"
+prompt:
+  version: "[prompt-version]"
+  sourcePath: "[path/to/prompt]"
+  variables: []
+model:
+  default:
+    name: "[model]"
+    provider: "[provider]"
+  optional: []
+rag:
+  pattern: "[N/A or retrieval strategy]"
+  knowledgeSourcePath: "[path]"
+  maxRetrievedChunks: "[number]"
+  citationRequired: true
+  noAnswerBehavior: "return-low-confidence"
+guardrails:
+  - id: "GR-001"
+    type: "Input / Output / Tool / Retrieval / Cost"
+    name: "[guardrail-name]"
+    action: "Block / Redact / Escalate / Log"
+    implementation: "[path or N/A]"
+codeGeneration:
+  plan: "ai-docs/[use-case-slug]/code-generation-plan.md"
+  allowedFiles: []
+  prohibitedChanges: []
+aiTesting:
+  plan: "ai-docs/[use-case-slug]/ai-test-generation-plan.md"
+  evalDataset: "[path]"
+  evalRunner: "[path]"
+  requiredCommand: "[verification command]"
+  releaseGate: {}
+traceability:
+  intake: "ai-docs/[use-case-slug]/intake.md"
+  aiSpec: "ai-docs/[use-case-slug]/ai-spec.md"
+  operatingModel: "ai-docs/[use-case-slug]/role-and-agent-operating-model.md"
+  manualReview: "ai-docs/[use-case-slug]/manual-review-and-approval-workflow.md"
+  agentRuns: "ai-docs/[use-case-slug]/16-agent-runs"
+  evaluation: "ai-docs/[use-case-slug]/evaluation-report.md"
+  readiness: "ai-docs/[use-case-slug]/production-readiness.md"
