@@ -7,6 +7,7 @@ Use this together with:
 - [`../README.md`](../README.md)
 - [`.ai-sdlc.json`](../.ai-sdlc.json)
 - [`templates/ai-sdlc-run-config.json`](./templates/ai-sdlc-run-config.json)
+- [`ai-sdlc-cli-how-to.md`](./ai-sdlc-cli-how-to.md)
 
 ## Required Local Tools
 

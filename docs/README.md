@@ -10,6 +10,7 @@ Framework for safely delivering AI-enabled software: intake, risk, specification
 | --- | --- |
 | [**ai-native-sdlc-framework.md**](./ai-native-sdlc-framework.md) | Policy owners, architects, governance leads — master framework |
 | [**templates/**](./templates/README.md) | Engineering teams — fillable forms per use case |
+| [**ai-sdlc-cli-how-to.md**](./ai-sdlc-cli-how-to.md) | Engineers — detailed `ai-sdlc` CLI guide with samples for every scenario |
 | [**agent-cli-prerequisites-and-errors.md**](./agent-cli-prerequisites-and-errors.md) | Engineers and platform teams — CLI prerequisites, API keys, validation, and troubleshooting |
 
 ## End-to-end sample
@@ -17,6 +18,8 @@ Framework for safely delivering AI-enabled software: intake, risk, specification
 | Sample | What it shows |
 | --- | --- |
 | [Spring Boot HR Policy Assistant](../sample/policy-assistant/README.md) | A governed Spring Boot 4.1 RAG feature with completed intake, risk, spec, role/agent model, rules, skills, guardrails, eval, security, monitoring, and readiness artifacts |
+| [Completed AI specs](../sample/ai-docs/policy-assistant/README.md) | Full governance packet used by the sample coding, test, security, and release agent runs |
+| [**Run and validate the sample**](../sample/README.md#run-and-validate-the-hr-policy-assistant) | Step-by-step: run tests, start the app, manual API checks, pass criteria |
 
 ## Structure
 
@@ -24,6 +27,7 @@ Framework for safely delivering AI-enabled software: intake, risk, specification
 docs/
 ├── README.md
 ├── ai-native-sdlc-framework.md   ← Master framework (policy + appendices)
+├── ai-sdlc-cli-how-to.md         ← CLI operational guide
 └── templates/                    ← Operational forms (24 templates)
 ```
 
@@ -40,77 +44,7 @@ docs/
 9. Bind **rules**, **skills**, and **guardrails** (§26) before production release.
 10. Use **Incident Report** and the continuous improvement loop (§25) after launch.
 
-## Agent Run State
-
-Install the local CLI on Linux/macOS:
-
-```bash
-make install-cli
-```
-
-Install on Windows PowerShell:
-
-```powershell
-.\scripts\install-cli.ps1
-```
-
-Start an AI SDLC agent run from an approved use-case packet:
-
-```bash
-make agent-coding TASK="Implement the approved feature from the AI specs"
-```
-
-Or use the installed CLI:
-
-```bash
-ai-sdlc start --agent coding --task "Implement the approved feature from the AI specs"
-```
-
-The installed command is backed by `bin/ai-sdlc` on Linux/macOS and by `bin/ai-sdlc.ps1` / `bin/ai-sdlc.cmd` on Windows.
-
-The default runner config is [`.ai-sdlc.json`](../.ai-sdlc.json). Create a new one from [`templates/ai-sdlc-run-config.json`](./templates/ai-sdlc-run-config.json) when adopting the framework in another repo.
-
-You can also call the script directly:
-
-```bash
-scripts/start-agent-run.sh \
-  --config .ai-sdlc.json \
-  --use-case sample/ai-docs/policy-assistant \
-  --agent coding \
-  --task "Implement the approved policy assistant feature from the AI specs"
-```
-
-Run the generated prompt with Codex:
-
-```bash
-ai-sdlc run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Or select another supported CLI runner:
-
-```bash
-ai-sdlc run --runner claude sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-ai-sdlc run --runner cursor sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-ai-sdlc run --runner manual sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Preview the resolved tool command without executing the agent:
-
-```bash
-ai-sdlc run --runner claude --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-ai-sdlc run --runner cursor --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Runner defaults live in [`.ai-sdlc.json`](../.ai-sdlc.json):
-
-| Runner | CLI executable | Default safety posture |
-| --- | --- | --- |
-| `codex` | `codex` | Workspace-write sandbox with approval policy from config |
-| `claude` | `claude` | `--print`, text output, `acceptEdits`, no session persistence |
-| `cursor` | `cursor-agent` | `--print`, text output, workspace sandbox enabled, no `--force` by default |
-| `manual` | N/A | Produces a prompt and records that manual execution is required |
-
-The run folder stores `state.json`, `agent-prompt.md`, `transcript.log`, `handoff.md`, `review.md`, and `events.md` so other agents and humans can review the work.
+After governance artifacts are in place, follow [**sample/README.md — Run and validate the HR Policy Assistant**](../sample/README.md#run-and-validate-the-hr-policy-assistant) to run tests, start the app, and confirm expected behavior.
 
 ## Fourteen artifacts to implement first
 

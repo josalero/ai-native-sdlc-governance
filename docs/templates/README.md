@@ -2,6 +2,12 @@
 
 Fillable forms derived from [`ai-native-sdlc-framework.md`](../ai-native-sdlc-framework.md). Copy a template per use case; store completed artifacts with your AI system documentation.
 
+## CLI how-to
+
+**[ai-sdlc-cli-how-to.md](../ai-sdlc-cli-how-to.md)** — detailed guide for the `ai-sdlc` CLI with copy-paste samples for every scenario: install, agent runs, all runners (Codex / Claude / Cursor / manual), state recording, framework validation, product verification, adoption in another repo, and troubleshooting.
+
+Related: [agent-cli-prerequisites-and-errors.md](../agent-cli-prerequisites-and-errors.md), [sample/README.md](../../sample/README.md).
+
 ## When to use each template
 
 | Phase | Template | Required for |
@@ -109,18 +115,12 @@ ai-docs/
 
 ## Agent run command
 
-Install the local CLI from a repository that contains the framework scripts.
+See **[ai-sdlc-cli-how-to.md](../ai-sdlc-cli-how-to.md)** for the full CLI guide (install, every runner, validation, verification, and troubleshooting).
 
-Linux/macOS:
+Quick start after installing the CLI:
 
 ```bash
 make install-cli
-```
-
-Windows PowerShell:
-
-```powershell
-.\scripts\install-cli.ps1
 ```
 
 Create or update `.ai-sdlc.json` from [`ai-sdlc-run-config.json`](./ai-sdlc-run-config.json), then start a run:

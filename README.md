@@ -22,6 +22,8 @@ The reference implementation is a Spring Boot 4.1 / Java 25 HR Policy Assistant 
 | [`sample/ai-docs/policy-assistant/`](./sample/ai-docs/policy-assistant/README.md) | Completed AI specs and governance packet |
 | [`sample/policy-assistant/`](./sample/policy-assistant/README.md) | Working Spring Boot sample application |
 | [`.ai-sdlc.json`](./.ai-sdlc.json) | Agent registry, runner defaults, required specs, and verification commands |
+| [`sample/README.md`](./sample/README.md) | Run and validate the HR Policy Assistant sample |
+| [`docs/ai-sdlc-cli-how-to.md`](./docs/ai-sdlc-cli-how-to.md) | Detailed CLI how-to with samples for every scenario |
 | [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md) | Agent CLI prerequisites, API keys, validation, and error messages |
 | [`bin/`](./bin/ai-sdlc) | Cross-platform CLI wrappers |
 | [`scripts/`](./scripts/start-agent-run.py) | Python runner implementation |
@@ -46,6 +48,8 @@ This repository is organized like this:
 ├── docs/
 │   ├── README.md
 │   ├── ai-native-sdlc-framework.md
+│   ├── ai-sdlc-cli-how-to.md
+│   ├── agent-cli-prerequisites-and-errors.md
 │   └── templates/
 ├── sample/
 │   ├── ai-docs/
@@ -214,6 +218,16 @@ When `ai-sdlc start` runs, it resolves every spec path relative to the use-case 
 | Custom verification commands | `ai-sdlc start --command "..."` |
 | Make shortcuts | `make agent-coding`, `make agent-test`, `make verify` |
 
+Operational guides:
+
+| Guide | Use when |
+| --- | --- |
+| [**docs/ai-sdlc-cli-how-to.md**](./docs/ai-sdlc-cli-how-to.md) | Installing the CLI, creating agent runs, every runner scenario, state recording, validation, and troubleshooting |
+| [**docs/agent-cli-prerequisites-and-errors.md**](./docs/agent-cli-prerequisites-and-errors.md) | API keys, login, and error messages for Codex, Claude, and Cursor |
+| [**sample/README.md**](./sample/README.md#run-and-validate-the-hr-policy-assistant) | Running and signing off the HR Policy Assistant sample end to end |
+
+See [**sample/README.md — Run and validate the HR Policy Assistant**](./sample/README.md#run-and-validate-the-hr-policy-assistant) for the sample walkthrough: install CLI → agent run → automated verification → manual API sign-off.
+
 ### Sample Application Features
 
 | Feature | What it demonstrates |
@@ -227,505 +241,25 @@ When `ai-sdlc start` runs, it resolves every spec path relative to the use-case 
 | AI evaluation cases | Test resources and JUnit coverage for expected answer behavior |
 | Production readiness packet | Security, monitoring, release, and human review artifacts |
 
-## Install The CLI
+## Quick Start
 
-The `ai-sdlc` CLI creates agent runs, runs a selected AI coding CLI, and records state for human review.
-
-Linux/macOS:
+**Sample app (no agent CLI required):**
 
 ```bash
-make install-cli
-```
-
-Make sure `~/.local/bin` is on your `PATH`.
-
-Windows PowerShell:
-
-```powershell
-.\scripts\install-cli.ps1
-```
-
-The install creates an `ai-sdlc` command backed by:
-
-- `bin/ai-sdlc` on Linux/macOS
-- `bin/ai-sdlc.ps1` and `bin/ai-sdlc.cmd` on Windows
-
-Health check:
-
-```bash
-ai-sdlc help
-ai-sdlc config
-```
-
-Agent CLI prerequisites, API keys, and troubleshooting are documented in [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md).
-
-If you do not install the CLI, you can still use the scripts directly:
-
-```bash
-scripts/start-agent-run.sh --help
-scripts/run-agent.sh --help
-scripts/record-agent-state.sh --help
-```
-
-## CLI Commands
-
-| Command | Purpose |
-| --- | --- |
-| `ai-sdlc config` | Print the resolved runner config path |
-| `ai-sdlc start` | Create a new agent run folder from the configured AI specs |
-| `ai-sdlc run` | Execute or prepare the generated `agent-prompt.md` |
-| `ai-sdlc state` | Update `state.json` and append an event to `events.md` |
-| `ai-sdlc help` | Show CLI help |
-
-Common environment variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `AI_SDLC_CONFIG` | Override the config path, default `.ai-sdlc.json` |
-| `AI_SDLC_RUNNER` | Override default runner for `ai-sdlc run` |
-| `AI_SDLC_AGENT_WORKDIR` | Override the working directory for agent execution |
-| `CODEX_AGENT_SANDBOX` | Override Codex sandbox mode |
-| `CODEX_AGENT_APPROVAL_POLICY` | Override Codex approval policy |
-| `CLAUDE_AGENT_PERMISSION_MODE` | Override Claude Code permission mode |
-| `CURSOR_AGENT_MODEL` | Override Cursor Agent model |
-
-## Configure Agent Runners
-
-Runner defaults live in [`.ai-sdlc.json`](./.ai-sdlc.json).
-
-Configured runners:
-
-| Runner | CLI | Default posture |
-| --- | --- | --- |
-| `codex` | `codex` | Default runner, workspace-write sandbox, approval policy from config |
-| `claude` | `claude` | Uses `--print`, text output, `acceptEdits`, no session persistence |
-| `cursor` | `cursor-agent` | Uses `--print`, workspace sandbox enabled, no `--force` by default |
-| `manual` | none | Records that the prompt should be pasted into another reviewed tool |
-
-Use [`docs/templates/ai-sdlc-run-config.json`](./docs/templates/ai-sdlc-run-config.json) to create a config for another repo or use case.
-
-Before using a hosted agent runner, confirm that its CLI is installed and authenticated:
-
-```bash
-command -v codex || true
-command -v claude || true
-command -v cursor-agent || true
-```
-
-See [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md) for API key options, login checks, and common errors.
-
-## Scenario 1: Review The AI Specs
-
-The completed sample specs are in [`sample/ai-docs/policy-assistant/`](./sample/ai-docs/policy-assistant/README.md).
-
-Start with these files:
-
-| Artifact | Purpose |
-| --- | --- |
-| [`feature-ai-spec.yml`](./sample/ai-docs/policy-assistant/03-specification/feature-ai-spec.yml) | Machine-readable feature contract |
-| [`ai-spec.md`](./sample/ai-docs/policy-assistant/03-specification/ai-spec.md) | Human-readable AI system specification |
-| [`role-and-agent-operating-model.md`](./sample/ai-docs/policy-assistant/03-specification/role-and-agent-operating-model.md) | Human roles, agents, RACI, approval boundaries |
-| [`manual-review-and-approval-workflow.md`](./sample/ai-docs/policy-assistant/03-specification/manual-review-and-approval-workflow.md) | Human review and manual action gates |
-| [`code-generation-plan.md`](./sample/ai-docs/policy-assistant/10-build/code-generation-plan.md) | Coding-agent implementation rules |
-| [`ai-test-generation-plan.md`](./sample/ai-docs/policy-assistant/10-build/ai-test-generation-plan.md) | Test-agent and eval generation rules |
-
-## Scenario 2: Create A Coding Agent Run
-
-Create an agent run from the configured sample packet:
-
-```bash
-ai-sdlc start --agent coding --task "Implement the approved HR Policy Assistant feature from the AI specs"
-```
-
-Or with Make:
-
-```bash
-make agent-coding TASK="Implement the approved HR Policy Assistant feature from the AI specs"
-```
-
-The command creates:
-
-```text
-sample/ai-docs/policy-assistant/16-agent-runs/<run-id>/
-```
-
-Each run contains:
-
-| File | Purpose |
-| --- | --- |
-| `state.json` | Current run status, agent, reviewer, specs, commands |
-| `required-specs.txt` | Specs the agent must read before work |
-| `agent-prompt.md` | Prompt to run with an AI coding tool |
-| `transcript.log` | Captured agent output |
-| `handoff.md` | Agent summary for human review |
-| `review.md` | Human approval or requested changes |
-| `events.md` | Append-only state history |
-
-## Scenario 3: Create Other Agent Runs
-
-Configured agent aliases are defined in [`.ai-sdlc.json`](./.ai-sdlc.json).
-
-```bash
-make agent-product TASK="Clarify product acceptance criteria"
-make agent-architecture TASK="Review architecture and controls"
-make agent-coding TASK="Implement the approved feature"
-make agent-test TASK="Generate or update AI evaluation tests"
-make agent-security TASK="Review prompt injection, leakage, and abuse risks"
-make agent-release TASK="Prepare release readiness evidence"
-```
-
-Equivalent direct command:
-
-```bash
-ai-sdlc start \
-  --agent security \
-  --task "Review prompt injection, leakage, and abuse risks" \
-  --reviewer "Security Reviewer"
-```
-
-## Scenario 4: Override Use Case, Config, Or Verification Command
-
-Use another governance packet:
-
-```bash
-ai-sdlc start \
-  --config .ai-sdlc.json \
-  --use-case ai-docs/my-feature \
-  --agent coding \
-  --task "Implement the approved feature"
-```
-
-Add a custom verification command to the run:
-
-```bash
-ai-sdlc start \
-  --agent coding \
-  --task "Implement the approved feature" \
-  --command "cd sample/policy-assistant && ./gradlew test" \
-  --command "cd sample/policy-assistant && ./gradlew check"
-```
-
-Create a deterministic run id for repeatable demos:
-
-```bash
-ai-sdlc start \
-  --agent coding \
-  --task "Demo run" \
-  --run-id demo-coding-run
-```
-
-If a required spec is intentionally missing during early adoption, create the run with warnings:
-
-```bash
-ai-sdlc start \
-  --use-case ai-docs/early-feature \
-  --agent coding \
-  --task "Draft implementation plan" \
-  --allow-missing-specs
-```
-
-## Scenario 5: Dry-Run A Runner
-
-Dry-run resolves the selected runner command without executing the agent.
-
-```bash
-ai-sdlc run --runner codex --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-ai-sdlc run --runner claude --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-ai-sdlc run --runner cursor --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Use this before granting an agent access to the repo. It confirms:
-
-- The run folder exists
-- `agent-prompt.md` exists
-- The selected runner is configured
-- The runner executable is available on `PATH`
-- The resolved command uses the expected sandbox, permission, model, and workspace options
-
-## Scenario 6: Execute With Codex
-
-Codex is the default runner in [`.ai-sdlc.json`](./.ai-sdlc.json).
-
-```bash
-ai-sdlc run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Or explicitly:
-
-```bash
-ai-sdlc run --runner codex sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Useful overrides:
-
-```bash
-CODEX_AGENT_SANDBOX=workspace-write \
-CODEX_AGENT_APPROVAL_POLICY=never \
-ai-sdlc run --runner codex sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-## Scenario 7: Execute With Claude Code CLI
-
-Claude Code runner defaults are configured to avoid bypass permissions.
-
-```bash
-ai-sdlc run --runner claude sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Preview first:
-
-```bash
-ai-sdlc run --runner claude --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Example override:
-
-```bash
-CLAUDE_AGENT_PERMISSION_MODE=plan \
-ai-sdlc run --runner claude sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Use `plan` when you want Claude to inspect and propose before edits.
-
-## Scenario 8: Execute With Cursor Agent CLI
-
-Cursor Agent runner defaults keep sandboxing enabled and do not use `--force` unless configured.
-
-```bash
-ai-sdlc run --runner cursor sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Preview first:
-
-```bash
-ai-sdlc run --runner cursor --dry-run sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Example model override:
-
-```bash
-CURSOR_AGENT_MODEL=sonnet-4 \
-ai-sdlc run --runner cursor sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-## Scenario 9: Manual Runner
-
-Use manual mode when:
-
-- The selected CLI is not installed
-- The agent must run in another approved environment
-- A human needs to copy the prompt into a reviewed tool
-- You want to validate governance state without spending agent tokens
-
-```bash
-ai-sdlc run --runner manual sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
-```
-
-Manual mode records `manual_prompt_ready` in `state.json` and appends an event to `events.md`.
-
-## Scenario 10: Record Human Review State
-
-Agents may draft artifacts, code, tests, reviews, and release evidence. Humans approve scope, risk, architecture, data use, merge readiness, security posture, and production release.
-
-Record state from either an agent or human review step:
-
-```bash
-ai-sdlc state \
-  --run-dir sample/ai-docs/policy-assistant/16-agent-runs/<run-id> \
-  --status ready_for_human_review \
-  --summary "Agent completed implementation and test evidence" \
-  --actor "Coding Agent"
-```
-
-Human reviewer decision examples:
-
-```bash
-ai-sdlc state \
-  --run-dir sample/ai-docs/policy-assistant/16-agent-runs/<run-id> \
-  --status changes_requested \
-  --summary "Reviewer requested stronger leakage tests" \
-  --actor "QA / AI Tester"
-```
-
-```bash
-ai-sdlc state \
-  --run-dir sample/ai-docs/policy-assistant/16-agent-runs/<run-id> \
-  --status human_approved \
-  --summary "Reviewed handoff, tests, and risk notes; approved for merge" \
-  --actor "Software Engineer"
-```
-
-Human reviewers should inspect:
-
-- `handoff.md`
-- `review.md`
-- `events.md`
-- `transcript.log`
-- The code diff and test output
-
-Agents must not approve their own work.
-
-## State Lifecycle
-
-Typical statuses:
-
-| Status | Meaning |
-| --- | --- |
-| `ready_for_agent` | Run folder and prompt were created |
-| `in_progress` | A runner started work |
-| `agent_execution_finished` | Runner finished, but human review is still required |
-| `agent_execution_failed` | Runner failed |
-| `manual_prompt_ready` | Manual runner prepared the prompt for external execution |
-| `ready_for_human_review` | Agent says work is ready for review |
-| `changes_requested` | Human reviewer requested changes |
-| `human_approved` | Human reviewer approved the run outcome |
-
-Teams can add statuses in their process, but every status change should be recorded with `ai-sdlc state`.
-
-## Validation vs Verification
-
-Use both. They answer different questions.
-
-| Activity | Question answered | Example |
-| --- | --- | --- |
-| Validation | Is the SDLC framework state structurally correct? | JSON parses, scripts compile, run folder contains expected files |
-| Verification | Does the product behavior meet requirements? | Spring Boot tests pass, eval cases pass, release gate passes |
-
-## Validate The Framework
-
-Validate local prerequisites:
-
-```bash
-python3 --version
-ai-sdlc help
-ai-sdlc config
-```
-
-Optional runner checks:
-
-```bash
-command -v codex || true
-command -v claude || true
-command -v cursor-agent || true
-```
-
-Validate runner scripts and config:
-
-```bash
-python3 -m py_compile scripts/start-agent-run.py scripts/record-agent-state.py scripts/run-agent.py
-python3 -m json.tool .ai-sdlc.json >/dev/null
-python3 -m json.tool docs/templates/ai-sdlc-run-config.json >/dev/null
-bash -n scripts/start-agent-run.sh scripts/record-agent-state.sh scripts/run-agent.sh scripts/run-codex-agent.sh bin/ai-sdlc
-```
-
-Validate CLI behavior without running an AI agent:
-
-```bash
-tmp="$(mktemp -d)"
-cp -R sample/ai-docs/policy-assistant "$tmp/use-case"
-ai-sdlc start --use-case "$tmp/use-case" --agent coding --task "Smoke test AI SDLC runner" --run-id smoke-coding
-ai-sdlc run --runner manual "$tmp/use-case/16-agent-runs/smoke-coding"
-ai-sdlc state \
-  --run-dir "$tmp/use-case/16-agent-runs/smoke-coding" \
-  --status ready_for_human_review \
-  --summary "Smoke test complete" \
-  --actor "Smoke Test"
-```
-
-Validate runner command resolution:
-
-```bash
-ai-sdlc run --runner codex --dry-run "$tmp/use-case/16-agent-runs/smoke-coding"
-ai-sdlc run --runner claude --dry-run "$tmp/use-case/16-agent-runs/smoke-coding"
-ai-sdlc run --runner cursor --dry-run "$tmp/use-case/16-agent-runs/smoke-coding"
-```
-
-Validate run state:
-
-```bash
-python3 -m json.tool "$tmp/use-case/16-agent-runs/smoke-coding/state.json" >/dev/null
-test -s "$tmp/use-case/16-agent-runs/smoke-coding/required-specs.txt"
-test -s "$tmp/use-case/16-agent-runs/smoke-coding/agent-prompt.md"
-test -s "$tmp/use-case/16-agent-runs/smoke-coding/events.md"
-```
-
-Windows PowerShell equivalents:
-
-```powershell
-$tmp = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath()) -Name "ai-sdlc-smoke-$([guid]::NewGuid())"
-Copy-Item -Recurse sample\ai-docs\policy-assistant "$tmp\use-case"
-ai-sdlc start --use-case "$tmp\use-case" --agent coding --task "Smoke test AI SDLC runner" --run-id smoke-coding
-ai-sdlc run --runner manual "$tmp\use-case\16-agent-runs\smoke-coding"
-ai-sdlc state --run-dir "$tmp\use-case\16-agent-runs\smoke-coding" --status ready_for_human_review --summary "Smoke test complete" --actor "Smoke Test"
-```
-
-## Verify The Spring Boot Sample
-
-Run the product release gate:
-
-```bash
+jenv shell 25    # if you use jenv
 make verify
+cd sample/policy-assistant && ./gradlew bootRun
 ```
 
-Or directly:
+Then follow the manual API checks in [**sample/README.md**](./sample/README.md#run-and-validate-the-hr-policy-assistant).
 
-```bash
-cd sample/policy-assistant
-./gradlew test
-```
-
-Expected result:
-
-- Gradle build succeeds
-- Unit tests pass
-- Evaluation tests pass
-- Generated class files target Java 25
-
-Optional Java target check:
-
-```bash
-cd sample/policy-assistant
-javap -verbose build/classes/java/main/com/example/policyassistant/PolicyAssistantApplication.class | rg "major version"
-```
-
-Expected Java 25 class major version: `69`.
-
-## Verify A Completed Agent Run
-
-After an agent finishes, reviewers should verify:
-
-| Check | Command or artifact |
-| --- | --- |
-| Run state is valid JSON | `python3 -m json.tool <run-dir>/state.json` |
-| Agent read required specs | `<run-dir>/required-specs.txt`, `<run-dir>/handoff.md` |
-| Transcript exists | `<run-dir>/transcript.log` |
-| Handoff is complete | `<run-dir>/handoff.md` |
-| Human decision recorded | `<run-dir>/review.md` and `<run-dir>/events.md` |
-| Product tests pass | `make verify` |
-| Diff is acceptable | `git diff` |
-
-The agent run is not complete until a human reviewer records the decision.
-
-## First Workflow To Try
+**Agent CLI workflow:**
 
 ```bash
 make install-cli
-ai-sdlc start --agent coding --task "Review the AI specs and propose one safe implementation improvement"
-ai-sdlc run --runner manual sample/ai-docs/policy-assistant/16-agent-runs/<run-id>
+ai-sdlc start --agent coding --task "Implement and verify the HR Policy Assistant sample from the AI specs"
 ```
 
-Then open the generated `agent-prompt.md`, paste it into the agent tool you want to use, and keep the review state in the same run folder.
+Full command reference, runner samples, and every scenario: [**docs/ai-sdlc-cli-how-to.md**](./docs/ai-sdlc-cli-how-to.md).
 
-## Troubleshooting
-
-| Symptom | Fix |
-| --- | --- |
-| `ai-sdlc: command not found` | Run `make install-cli` and add `~/.local/bin` to `PATH` |
-| `Runner config not found` | Run from repo root or set `AI_SDLC_CONFIG=/path/to/.ai-sdlc.json` |
-| `Required specs are missing` | Complete the use-case packet or pass `--allow-missing-specs` for draft work |
-| `Agent runner executable not found` | Install the selected CLI or use `--runner manual` |
-| Cursor says `Authentication required. Please run 'agent login' first, or set CURSOR_API_KEY environment variable.` | Run `cursor-agent login`, set `CURSOR_API_KEY`, or use `--runner manual` |
-| Cursor or Claude starts with unexpected permissions | Check `.ai-sdlc.json`, `--dry-run`, and runner-specific environment overrides |
-| Reusing `--run-id` fails | Pick a new run id or delete the old smoke run folder |
-
-For detailed CLI prerequisites, API-key setup, and error message explanations, see [`docs/agent-cli-prerequisites-and-errors.md`](./docs/agent-cli-prerequisites-and-errors.md).
+Step-by-step sample sign-off (install → execute → validate → approve): [**sample/README.md**](./sample/README.md#run-and-validate-the-hr-policy-assistant).
